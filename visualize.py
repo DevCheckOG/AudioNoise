@@ -43,7 +43,8 @@ class WaveformVisualizer:
 
     def setup_ui(self):
         self.fig, self.ax = plt.subplots(figsize=(12, 6))
-        plt.subplots_adjust(bottom=0.2)
+        # Manual "tight layout" to maximize space but keep room for slider
+        plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.15)
 
         # Create line objects
         for _, name in self.mapped_files:
@@ -251,6 +252,24 @@ class WaveformVisualizer:
                 shift = height * 0.25
                 self.ax.set_ylim(ylim[0] - shift, ylim[1] - shift)
                 changed = True
+            elif event.key == 'pagedown': # Zoom In (0.5x width)
+                center = (xlim[0] + xlim[1]) / 2
+                new_width = width * 0.5
+                new_width = max(new_width, self.min_width_sec)
+                new_start = center - (new_width / 2)
+                # Clamp start
+                new_start = max(0, min(new_start, self.duration_sec - new_width))
+                self.ax.set_xlim(new_start, new_start + new_width)
+                changed = True
+            elif event.key == 'pageup': # Zoom Out (2x width)
+                center = (xlim[0] + xlim[1]) / 2
+                new_width = width * 2.0
+                new_width = min(new_width, MAX_WIDTH_SEC)
+                new_start = center - (new_width / 2)
+                # Clamp start
+                new_start = max(0, min(new_start, self.duration_sec - new_width))
+                self.ax.set_xlim(new_start, new_start + new_width)
+                changed = True
 
             if changed:
                 # Reload data for new X view
@@ -270,13 +289,11 @@ class WaveformVisualizer:
         finally:
              self.navigating = False
 
-        # Space Bar (Reset Zoom) - Needs update_view which handles navigating flag internally
+        # Space Bar (Reset Zoom) - Only reset Y axis to fit visible data (Auto-scale)
         if event.key == ' ':
-            current_xlim = self.ax.get_xlim()
-            center = (current_xlim[0] + current_xlim[1]) / 2
-            new_width = MAX_WIDTH_SEC
-            new_start = center - (new_width / 2)
-            self.update_view(new_start, new_width)
+            xlim = self.ax.get_xlim()
+            width = xlim[1] - xlim[0]
+            self.update_view(xlim[0], width)
 
     def on_select(self, eclick, erelease):
         """Handle rectangle selection."""

@@ -103,6 +103,13 @@ class WaveformVisualizer:
 
                 line.set_data(t_axis, normalized)
 
+                # Show markers if zoomed in enough (few samples visible)
+                if chunk.size < 300:
+                    line.set_marker('.')
+                    line.set_markersize(3)
+                else:
+                    line.set_marker("")
+
                 global_min_y = min(global_min_y, np.min(normalized))
                 global_max_y = max(global_max_y, np.max(normalized))
                 has_data = True

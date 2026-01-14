@@ -56,4 +56,10 @@ gensin.h: gensin
 
 gensin: gensin.c
 
+test: tests/lfo_verify
+	tests/lfo_verify
+
+tests/lfo_verify: tests/lfo_verify.o
+tests/lfo_verify.o: $(HEADERS)
+
 .PHONY: default play $(effects) SeymourDuncan visualize

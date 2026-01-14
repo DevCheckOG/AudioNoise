@@ -32,7 +32,7 @@ static inline float fastpow(float a, float b)
 //
 // So you can add two values in the -1..1 range and
 // then limit the sum to that range too.
-static float limit_value(float x)
+static inline float limit_value(float x)
 {
 	float x2 = x*x;
 	float x4 = x2*x2;

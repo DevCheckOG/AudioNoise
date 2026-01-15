@@ -1,5 +1,6 @@
 //
 // Do the 'sample to float' and 'float to sample' processing
+// together with basic noise gating
 //
 
 static unsigned int magnitude;
@@ -10,6 +11,9 @@ static unsigned int magnitude;
 static inline float process_input(s32 sample)
 {
 	static int max, min;
+	const float max_gate = SAMPLE_TO_FLOAT_MULTIPLIER;
+	const float min_gate = max_gate / 100;
+	static float noise_gate = SAMPLE_TO_FLOAT_MULTIPLIER / 100;
 
 	//
 	// We'll track max and min rather than
@@ -31,7 +35,22 @@ static inline float process_input(s32 sample)
 	max -= (max >> 12)+1;
 	min -= (min >> 12)-1;
 
-	return sample * SAMPLE_TO_FLOAT_MULTIPLIER;
+	//
+	// Random fixed noise-gate looking at the
+	// top 10 bits of the signal magnitude (which
+	// is approx 1mVrms per step)
+	//
+	if (magnitude >> 22) {
+		noise_gate *= 1.001;
+		if (noise_gate > max_gate)
+			noise_gate = max_gate;
+	} else {
+		noise_gate *= 0.999;
+		if (noise_gate < min_gate)
+			noise_gate = min_gate;
+	}
+
+	return sample * noise_gate;
 }
 
 static inline s32 process_output(float out)

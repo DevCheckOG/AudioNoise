@@ -15,6 +15,7 @@ typedef unsigned int uint;
 #include "lfo.h"
 #include "effect.h"
 #include "biquad.h"
+#include "process.h"
 
 // Effects
 #include "flanger.h"
@@ -25,23 +26,8 @@ typedef unsigned int uint;
 #include "discont.h"
 #include "distortion.h"
 
-struct {
-	float attack, decay, value;
-} magnitude;
-static inline void magnitude_init(float pot1, float pot2, float pot3, float pot4)
-{
-	magnitude.attack = pot1;
-	magnitude.decay = pot2;
-}
-static inline float magnitude_step(float in)
-{
-	float mult, val = magnitude.value;
-
-	in = fabs(in);
-	mult = (in > val) ? magnitude.attack : magnitude.decay;
-	val += mult * (in - val);
-	return magnitude.value = val;
-}
+static void magnitude_init(float pot1, float pot2, float pot3, float pot4) {}
+static float magnitude_step(float in) { return uint_to_fraction(magnitude); }
 
 #define EFF(x) { #x, x##_init, x##_step }
 struct effect {
@@ -87,24 +73,13 @@ int main(int argc, char **argv)
 
 	eff->init(pot[0], pot[1], pot[2], pot[3]);
 	while (fread(&sample, 4, 1, stdin) == 1) {
-		float in = sample / (float)0x80000000;
 		UPDATE(effect_delay);
-		float out = eff->step(in);
-		sample = (int)(out * 0x80000000);
 
-		// Check for overflow on float->int conversion
-		//
-		// Note that this won't catch overflows
-		// due to out being outside [-2,2], we
-		// assume the effects are at least
-		// being that careful
-		if (out >= 0) {
-			if (sample < 0)
-				sample = 0x7fffffff;
-		} else {
-			if (sample > 0)
-				sample = 0x80000000;
-		}
+		float in = process_input(sample);
+
+		float out = eff->step(in);
+
+		sample = process_output(out);
 		if (fwrite(&sample, 4, 1, stdout) != 1)
 			return 1;
 	}

@@ -14,7 +14,7 @@ phaser_defaults = 0.3 0.3 0.5 0.5
 discont_defaults = 0.8 0.1 0.2 0.2
 distortion_defaults = 0.5 0.6 0.8 0.0
 
-HEADERS = biquad.h discont.h distortion.h echo.h effect.h flanger.h  fm.h  gensin.h lfo.h  phaser.h  util.h
+HEADERS = biquad.h discont.h distortion.h echo.h effect.h flanger.h  fm.h  gensin.h lfo.h  phaser.h  util.h process.h
 
 default:
 	@echo "Pick one of" $(effects)
